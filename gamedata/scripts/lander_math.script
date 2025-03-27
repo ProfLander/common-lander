@@ -230,3 +230,9 @@ function axis_angle_to_euler(axis, angle)
       math.asin(axis.x * axis.y * t + axis.z * s)
    )
 end
+
+--- Interpolate between two vectors
+function vector_lerp(a, b, t)
+   local delta = vector():set(b):sub(a)
+   return vector():set(a:add(delta:mul(t)))
+end

@@ -225,10 +225,7 @@ end
 ---@return vector?, number?
 function vector_axis_angle(va, vb)
    local axis = vector_cross(va, vb)
-   printf("  axis: %s", axis)
-
    local mag = axis:magnitude()
-   printf("  mag: %s", mag)
 
    if mag ~= mag
    then
@@ -237,7 +234,6 @@ function vector_axis_angle(va, vb)
    end
 
    local angle = math.asin(mag)
-   printf("  angle: %s", angle)
 
    if angle ~= angle
    then

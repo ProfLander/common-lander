@@ -49,16 +49,21 @@ function rad(f)
    return f * DEG2RAD
 end
 
+function vector_valid(vec)
+   return vec ~= nil
+      and vec.x == vec.x
+      and vec.y == vec.y
+      and vec.z == vec.z
+end
+
 ---@param v vector
 ---@param k vector
 ---@param theta number
 ---@return vector
 function vector_rotate(v, k, theta)
-   if theta == 0
-   or theta == 1/0
-   or theta == 0/0
-   or theta == -0/0
-   or theta == -1/0
+   assert(vector_valid(v), "Invalid vector")
+   assert(vector_valid(k), "Invalid axis")
+   assert(theta ~= nil, "Invalid angle")
    then
       return v
    end

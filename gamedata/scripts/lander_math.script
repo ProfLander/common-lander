@@ -210,16 +210,6 @@ function world_to_basis(basis, vec)
    )
 end
 
---- Fetch the camera's basis
-function camera_basis()
-   local dev = device()
-   return basis(
-      dev.cam_right,
-      dev.cam_top,
-      dev.cam_dir
-   )
-end
-
 --- Convert a Heading-Pitch-Bank rotation
 --- (such as those returned from bone_direction)
 --- into a direction vector

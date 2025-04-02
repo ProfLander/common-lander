@@ -288,3 +288,333 @@ function vector_lerp(a, b, t)
    local delta = vector():set(b):sub(a)
    return vector():set(a:add(delta:mul(t)))
 end
+
+--- 3-vector metatable
+---@class vec3
+---@field x number
+---@field y number
+---@field z number
+---@field vec vector
+local Vec3 = {}
+
+function is_number(num)
+   return type(num) == "number"
+end
+
+function is_vector(vec)
+   return is_number(vec.x)
+      and is_number(vec.y)
+      and is_number(vec.z)
+end
+
+function is_vec3(vec)
+   return getmetatable(vec) == Vec3
+end
+
+function valid_number(num)
+   return is_number(num) and num == num
+end
+
+function valid_vector(vec)
+   return is_vector(vec)
+      and valid_number(vec.x)
+      and valid_number(vec.y)
+      and valid_number(vec.z)
+end
+
+function assert_valid_number(num, msg)
+   msg = msg or "Invalid number"
+   if not valid_number(num) then
+      assert(nil, "%s: %s", msg, num)
+   end
+end
+
+function assert_valid_vector(vec, msg)
+   msg = msg or "Invalid vector"
+   if not valid_vector(vec) then
+      assert(nil, "%s: %s", msg, vec)
+   end
+end
+
+function unwrap(x)
+   if getmetatable(x) == Vec3 then
+      return x:unwrap()
+   end
+
+   return x
+end
+
+--- 3-vector constructor
+function vec3(...)
+   local args = {...}
+
+   local vec = vector()
+   if #args == 1 then
+      local arg = args[1]
+      assert_valid_vector(arg)
+      vec:set(arg)
+   elseif #args == 3 then
+      assert_valid_number(args[1], "Invalid X component")
+      assert_valid_number(args[2], "Invalid Y component")
+      assert_valid_number(args[3], "Invalid Z component")
+      vec:set(args[1], args[2], args[3])
+   elseif #args ~= 0 then
+      assert(nil, string.format("Invalid input: %s", args))
+   end
+
+   return setmetatable(
+      { vec = vec },
+      {
+         __index = function(self, key)
+            ---@diagnostic disable-next-line: undefined-field
+            if Vec3.__classDict[key] then
+               ---@diagnostic disable-next-line: undefined-field
+               return Vec3.__classDict[key]
+            elseif key == "x" then
+               return self.vec.x
+            elseif key == "y" then
+               return self.vec.y
+            elseif key == "z" then
+               return self.vec.z
+            end
+         end
+      }
+   )
+end
+
+---@return vec3
+function Vec3:validate()
+   assert_valid_vector(self.vec)
+   return self
+end
+
+---@return vector
+function Vec3:copy()
+   return vector():set(self.vec)
+end
+
+---@param x number|vector|vec3
+---@return vec3
+function Vec3:add(x)
+   x = unwrap(x)
+
+   if not valid_number(x) or not valid_vector(x) then
+      assert(nil, "Input must be a number or vector")
+   end
+
+   return vec3(self:copy():add(x)):validate()
+end
+
+---@param x number|vector|vec3
+---@return vec3
+function Vec3:sub(x)
+   x = unwrap(x)
+
+   if not valid_number(x) or not valid_vector(x) then
+      assert(nil, "Input must be a number or vector")
+   end
+
+   return vec3(self:copy():sub(x)):validate()
+end
+
+---@param x number|vector|vec3
+---@return vec3
+function Vec3:mul(x)
+   x = unwrap(x)
+
+   if not valid_number(x) or not valid_vector(x) then
+      assert(nil, "Input must be a number or vector")
+   end
+
+   return vec3(self:copy():mul(x)):validate()
+end
+
+---@param x number|vector|vec3
+---@return vec3
+function Vec3:div(x)
+   x = unwrap(x)
+
+   if not valid_number(x) or not valid_vector(x) then
+      assert(nil, "Input must be a number or vector")
+   end
+
+   return vec3(self:copy():div(x)):validate()
+end
+
+---@param x vector|vec3
+---@return vec3
+function Vec3:min(x)
+   x = unwrap(x)
+   assert_valid_vector(x)
+   return vec3(self:copy():min(x)):validate()
+end
+
+---@param x vector|vec3
+---@return vec3
+function Vec3:max(x)
+   x = unwrap(x)
+   assert_valid_vector(x)
+   return vec3(self:copy():max(x)):validate()
+end
+
+---@param x vector|vec3
+---@return vec3
+function Vec3:abs(x)
+   x = unwrap(x)
+   assert_valid_vector(x)
+   return vec3(self:copy():abs(x)):validate()
+end
+
+---@param x vector|vec3
+---@return number
+function Vec3:dot(x)
+   x = unwrap(x)
+   assert_valid_vector(x)
+   return self.vec:dotproduct(x)
+end
+
+---@param x vector|vec3
+---@return vec3
+function Vec3:cross(x)
+   x = unwrap(x)
+   assert_valid_vector(x)
+   return vec3(vector_cross(self.vec, x)):validate()
+end
+
+---@return number
+function Vec3:magnitude()
+   return self.vec:magnitude()
+end
+
+---@return vec3
+function Vec3:normalize()
+   return vec3(self:copy():normalize()):validate()
+end
+
+---@return vec3
+function Vec3:normalize_safe()
+   return vec3(self:copy():normalize_safe()):validate()
+end
+
+---@return vec3
+function Vec3:set_length(length)
+   assert_valid_number(length, "Invalid length")
+   return vec3(self:copy():set_length(length)):validate()
+end
+
+---@param x vector|vec3
+---@return number
+function Vec3:distance_to(x)
+   x = unwrap(x)
+   assert_valid_vector(x)
+   return self.vec:distance_to(x)
+end
+
+---@param x vector|vec3
+---@return number
+function Vec3:distance_to_xz(x)
+   x = unwrap(x)
+   assert_valid_vector(x)
+   return self.vec:distance_to_xz(x)
+end
+
+---@param x vector|vec3
+---@return number
+function Vec3:distance_to_sqr(x)
+   x = unwrap(x)
+   assert_valid_vector(x)
+   return self.vec:distance_to_sqr(x)
+end
+
+---@param x vector|vec3
+---@param y number
+---@return vec3
+function Vec3:lerp(x, y)
+   x = unwrap(x)
+   assert_valid_vector(x)
+   assert_valid_number(y)
+   return vec3(self:copy():lerp(x, y)):validate()
+end
+
+---@param x vector|vec3
+---@return vec3
+function Vec3:reflect(x)
+   x = unwrap(x)
+   assert_valid_vector(x)
+   return vec3(self:copy():reflect(x)):validate()
+end
+
+---@param x vector|vec3
+---@return vec3
+function Vec3:slide(x)
+   x = unwrap(x)
+   assert_valid_vector(x)
+   return vec3(self:copy():slide(x)):validate()
+end
+
+---@param x vector|vec3
+---@return vec3
+function Vec3:average(x)
+   x = unwrap(x)
+   assert_valid_vector(x)
+   return vec3(self:copy():average(x)):validate()
+end
+
+---@return vec3
+function Vec3:align()
+   return vec3(self:copy():align()):validate()
+end
+
+---@param x vector|vec3
+---@return vec3
+function Vec3:invert(x)
+   x = unwrap(x)
+   assert_valid_vector(x)
+   return vec3(self:copy():invert()):validate()
+end
+
+---@param x number|vector|vec3
+---@param y number|vector|vec3
+---@return vec3
+function Vec3:mad(x, y)
+   x = unwrap(x)
+   y = unwrap(y)
+   assert_valid_vector(x)
+   if not valid_vector(y) or valid_number(y) then
+      assert(nil, string.format("Invalid input: %s", y))
+   end
+   return vec3(self:copy():mad(x, y)):validate()
+end
+
+---@param x vector|vec3
+---@return vec3
+function Vec3:clamp(x)
+   x = unwrap(x)
+   assert_valid_vector(x)
+   return vec3(self:copy():clamp(x)):validate()
+end
+
+-- TODO: Figure out what these do
+--[[
+function Vec3:getP()
+   return self.vec:getP()
+end
+
+function Vec3:getH()
+   return self.vec:getH()
+end
+
+function Vec3:setHP(number, number)
+   return vec3(self:copy():setHP()):validate()
+end
+
+function Vec3:inertion(x)
+   assert_valid_number(x)
+   return self:copy():inertion(x)
+end
+
+function Vec3:similar(x)
+   assert_valid_number(x)
+   return self:similar(x)
+end
+--]]

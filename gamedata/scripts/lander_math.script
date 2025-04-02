@@ -64,6 +64,9 @@ function vector_rotate(v, k, theta)
    assert(vector_valid(v), "Invalid vector")
    assert(vector_valid(k), "Invalid axis")
    assert(theta ~= nil, "Invalid angle")
+
+   if math.abs(theta) < EPSILON
+   or theta ~= theta
    then
       return v
    end
@@ -75,8 +78,8 @@ function vector_rotate(v, k, theta)
       :set(v)
       :mul(cos_theta)
       :add(vector_cross(k, v):mul(sin_theta))
-      :add(vector():set(k):mul(k:dotproduct(v)))
-      :mul(1 - cos_theta)
+      :add(vector():set(k):mul(k:dotproduct(v)):mul(1 - cos_theta))
+      
 end
 
 ---@param v vector

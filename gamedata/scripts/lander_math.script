@@ -25,6 +25,8 @@ EPSILON = 0.00000001
 
 -- Implementation
 
+---@param n number
+---@return number
 function sign(n)
    if n > 0 then
       return 1
@@ -35,14 +37,22 @@ function sign(n)
    end
 end
 
+---@param f number
+---@return number
 function deg(f)
    return f * RAD2DEG
 end
 
+---@param f number
+---@return number
 function rad(f)
    return f * DEG2RAD
 end
 
+---@param v vector
+---@param k vector
+---@param theta number
+---@return vector
 function vector_rotate(v, k, theta)
    if theta == 0
    or theta == 1/0
@@ -64,25 +74,45 @@ function vector_rotate(v, k, theta)
       :mul(1 - cos_theta)
 end
 
+---@param v vector
+---@param theta number
+---@return vector
 function vector_rotate_x(v, theta)
    return vector_rotate(v, vector():set(1, 0, 0), theta)
 end
 
+---@param v vector
+---@param theta number
+---@return vector
 function vector_rotate_y(v, theta)
    return vector_rotate(v, vector():set(0, 1, 0), theta)
 end
 
+---@param v vector
+---@param theta number
+---@return vector
 function vector_rotate_z(v, theta)
    return vector_rotate(v, vector():set(0, 0, 1), theta)
 end
 
+---@param v vector
+---@return vector
 function vector_xz(v)
    return vector():set(v.x, 0, v.z)
 end
 
 --- Basis metatable
+---@class basis
+---@field x vector
+---@field y vector
+---@field z vector
 local Basis = {}
 
+--- Basis Constructor
+---@param x? vector
+---@param y? vector
+---@param z? vector
+---@return basis
 function basis(x, y, z)
    return setmetatable(
       {
@@ -96,6 +126,7 @@ function basis(x, y, z)
    )
 end
 
+---@return basis
 function Basis:normalize()
    return basis(
       self.x:normalize(),
@@ -104,6 +135,9 @@ function Basis:normalize()
    )
 end
 
+---@param k vector
+---@param theta number
+---@return basis
 function Basis:rotate(k, theta)
    if theta == 0/0 then
       return self
@@ -124,18 +158,26 @@ function Basis:rotate(k, theta)
    ):normalize()
 end
 
+---@param theta number
+---@return basis
 function Basis:rotate_x(theta)
    return self:rotate(POS_X, theta)
 end
 
+---@param theta number
+---@return basis
 function Basis:rotate_y(theta)
    return self:rotate(POS_Y, theta)
 end
 
+---@param theta number
+---@return basis
 function Basis:rotate_z(theta)
    return self:rotate(POS_Z, theta)
 end
 
+---@param hpb vector
+---@return basis
 function Basis:rotate_hpb(hpb)
    local out = basis(
       vector():set(self.x),
@@ -149,6 +191,9 @@ function Basis:rotate_hpb(hpb)
 end
 
 --- Transform the given vector into basis-space
+---@param basis basis
+---@param vec vector
+---@return vector
 function world_to_basis(basis, vec)
    return vector():set(
       vec:dotproduct(basis.x),
@@ -170,11 +215,16 @@ end
 --- Convert a Heading-Pitch-Bank rotation
 --- (such as those returned from bone_direction)
 --- into a direction vector
+---@param hpb vector
+---@return vector
 function hpb_to_direction(hpb)
    return basis():rotate_hpb(hpb).z
 end
 
 --- Return the rotation between the given vectors in axis-angle form
+---@param va vector
+---@param vb vector
+---@return vector?, number?
 function vector_axis_angle(va, vb)
    local axis = vector_cross(va, vb)
    printf("  axis: %s", axis)
@@ -203,6 +253,9 @@ function vector_axis_angle(va, vb)
 end
 
 --- Convert from an axis-angle representation to euler angles
+---@param axis vector
+---@param angle number
+---@return vector
 function axis_angle_to_euler(axis, angle)
    local s = math.sin(angle)
    local c = math.cos(angle)
@@ -232,6 +285,9 @@ function axis_angle_to_euler(axis, angle)
 end
 
 --- Interpolate between two vectors
+---@param a vector
+---@param b vector
+---@param t number
 function vector_lerp(a, b, t)
    local delta = vector():set(b):sub(a)
    return vector():set(a:add(delta:mul(t)))

@@ -228,6 +228,7 @@ function vector_axis_angle(va, vb)
    local mag = axis:magnitude()
 
    if mag ~= mag
+      or mag < EPSILON
    then
       printf("Invalid magnitude")
       return nil
@@ -236,6 +237,7 @@ function vector_axis_angle(va, vb)
    local angle = math.asin(mag)
 
    if angle ~= angle
+      or math.abs(angle) < EPSILON
    then
       printf("Invalid angle")
       return nil

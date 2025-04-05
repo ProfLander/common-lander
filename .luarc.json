@@ -1,0 +1,34 @@
+{
+    "runtime": {
+        "version": "LuaJIT",
+        "path": [
+            "?.script",
+            "?/?.script",
+            "../../stalker-anomaly/gamedata/scripts/?.script"
+        ],
+        "plugin": "~/.local/src/anomaly-definitions/plugin.lua"
+    },
+    "workspace": {
+        "ignoreSubmodules": false,
+        "library": [
+            "~/.local/src/anomaly-definitions/library",
+            "~/games/stalker/stalker-anomaly/gamedata/scripts"
+        ],
+    },
+    "hint": {
+        "enable": true,
+        "setType": true,
+    },
+    "diagnostics.disable": [
+        "lowercase-global"
+    ],
+    "diagnostics.globals": [
+        "cl_math",
+        "cl_function",
+        "cl_lens",
+        "cl_list",
+        "cl_logging",
+        "cl_schedule",
+        "cl_string",
+    ],
+}

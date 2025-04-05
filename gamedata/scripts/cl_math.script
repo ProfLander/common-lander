@@ -227,18 +227,14 @@ function vector_axis_angle(va, vb)
    local axis = vector_cross(va, vb)
    local mag = axis:magnitude()
 
-   if mag ~= mag
-      or mag < EPSILON
-   then
+   if mag ~= mag then
       printf("Invalid magnitude")
       return nil
    end
 
    local angle = math.asin(mag)
 
-   if angle ~= angle
-      or math.abs(angle) < EPSILON
-   then
+   if angle ~= angle then
       printf("Invalid angle")
       return nil
    end
@@ -277,5 +273,14 @@ function axis_angle_to_euler(axis, angle)
       math.atan2(axis.y * s - axis.x * axis.z * t, 1 - (axis.y * axis.y + axis.z * axis.z) * t),
       math.atan2(axis.x * s - axis.y * axis.z * t, 1 - (axis.x * axis.x + axis.z * axis.z) * t),
       math.asin(axis.x * axis.y * t + axis.z * s)
+   )
+end
+
+function matrix_transpose(mat)
+   return matrix():set(
+      vector():set(mat.i.x, mat.j.x, mat.k.x),
+      vector():set(mat.i.y, mat.j.y, mat.k.y),
+      vector():set(mat.i.z, mat.j.z, mat.k.z),
+      vector()
    )
 end

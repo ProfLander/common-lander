@@ -655,7 +655,7 @@ function handle_error(e, stack)
    actor_menu.set_msg(1, msg, 10000)
 end
 
-state = {}
+state = _cl_schedule.state
 
 --- Entrypoint
 ---@return nil

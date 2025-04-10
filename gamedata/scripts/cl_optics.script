@@ -1,0 +1,211 @@
+----------------------------------------------------------------------------
+-- Common Lander: Optics
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+cl_import(this, {
+   cl_types = {"is_callable"},
+   cl_function = {"compose"},
+   cl_option = {"None"},
+})
+
+function get(k)
+   return function(t)
+      return t[k]
+   end
+end
+
+function set(k)
+   return function(t, v)
+      t[k] = v
+      return t
+   end
+end
+
+function get_typed(k, cond)
+   return function(t)
+      --printf("get_typed(%s, %s, %s)", k, cond, tostring(t))
+      local v = t[k]
+
+      if not cond(v) then
+         --print("condition failed")
+         return None
+      end
+
+      return v
+   end
+end
+
+function set_typed(k, cond)
+   return function(t, v)
+      --print("set_typed", k, cond, t, v)
+
+      if not cond(v) then
+         --print("condition failed")
+         return None
+      end
+
+      if t == None then
+         return t
+      end
+
+      t[k] = v
+      return t
+   end
+end
+
+--- Optic index higher-order-function container
+Optic = {}
+
+--- Optic metatable higher-order-function container
+OpticMeta = {}
+
+function Optic.new(mt)
+   return function(get, set)
+      if not is_callable(get) then
+         assert(
+            nil,
+            string.format("Getter is not a callable value: %s", get)
+         )
+      end
+      if not is_callable(set) then
+         assert(
+            nil,
+            string.format("Setter is not a callable value: %s", set)
+         )
+      end
+      return setmetatable(
+         {
+            _name = nil,
+            _get = get,
+            _set = set
+         },
+         mt
+      )
+   end
+end
+
+function Optic.at(ind, suf)
+   return function(k)
+      return ind.new(get(k), set(k)):name(k .. (suf or ""))
+   end
+end
+
+function Optic.name(this, name)
+   this._name = name
+   return this
+end
+
+function Optic.where(ind, suf)
+   return function(k, pg, ps)
+      return ind.new(
+         get_typed(k, pg),
+         set_typed(k, ps or pg)
+      ):name(k .. (suf or "") .. ": " .. tostring(pg) .. (ps and (" -> " .. tostring(ps)) or ""))
+   end
+end
+
+function OpticMeta.__tostring(tn)
+   return function(self)
+      local exp = self._name
+
+      local def = tn .. "<"
+         .. tostring(self._get)
+         .. ", "
+         .. tostring(self._set)
+         .. ">"
+
+      return exp or def
+   end
+end
+
+function OpticMeta.__concat(a, b)
+   local an = a._name or tostring(a)
+   local bn = b._name or tostring(b)
+   if b.cond then
+      bn = bn .. ": " .. tostring(b.cond)
+   end
+   return Lens.new(
+      compose(a._get, b._get),
+      function(t, v)
+         return a:map(
+            t,
+            function(x)
+               return b:set(x, v)
+            end
+         )
+      end
+   )
+   :name(an .. " . " .. bn)
+end
+
+--- Lens index
+Lens = {}
+
+--- Lens metatable
+LensMeta = {__index = Lens}
+
+Lens.name = Optic.name
+Lens.new = Optic.new(LensMeta)
+Lens.at = Optic.at(Lens)
+Lens.where = Optic.where(Lens)
+
+LensMeta.__tostring = OpticMeta.__tostring("Lens")
+LensMeta.__concat = OpticMeta.__concat
+
+function Lens:get(t)
+   return self._get(t)
+end
+
+function Lens:set(t, v)
+   return self._set(t, v)
+end
+
+function Lens:map(t, f)
+   return self:set(t, f(self:get(t)))
+end
+
+--- Prism index
+Prism = {}
+
+--- Prism metatable
+PrismMeta = { __index = Prism }
+
+Prism.new = Optic.new(PrismMeta)
+Prism.name = Optic.name
+Prism.at = Optic.at(Prism, "?")
+Prism.where = Optic.where(Prism, "?")
+PrismMeta.__tostring = OpticMeta.__tostring("Prism")
+PrismMeta.__concat = OpticMeta.__concat
+
+function Prism:get(t)
+   local v = self._get(t)
+   if v == None then
+      return None
+   end
+   return v
+end
+
+function Prism:set(t, v)
+   if self:get(t) == None then
+      return t
+   end
+   return self._set(t, v)
+end
+
+function Prism:map(t, f)
+   local v = self:get(t)
+
+   if v == None then
+      return t
+   end
+
+   v = f(v)
+
+   if v == None then
+      return t
+   end
+
+   return self:set(t, v)
+end

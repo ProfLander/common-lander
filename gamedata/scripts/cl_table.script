@@ -4,6 +4,8 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
+local indent = cl_string.indent
+
 ---@param tbl table
 ---@param f fun(k: any, v: any): (any, any)
 ---@return table
@@ -35,4 +37,29 @@ function foreach(tbl, f)
    for ka,va in pairs(tbl) do
       f(ka, va)
    end
+end
+
+function table_to_string(tbl)
+   local ty = type(tbl)
+
+   if ty == "string" then
+      return tbl
+   elseif ty == "userdata" then
+      return "userdata"
+   elseif ty ~= "table" then
+      local mt = getmetatable(tbl)
+      if mt and mt.__tostring then
+         return tostring(tbl)
+      end
+
+      return ty
+   end
+
+   local out = "{"
+   for k,v in pairs(tbl) do
+      out = out ..
+         indent("\n" .. tostring(k) .. ": " .. table_to_string(v) .. ",")
+   end
+   out = out .. "\n}"
+   return out
 end

@@ -1,0 +1,162 @@
+----------------------------------------------------------------------------
+-- Common Lander: System
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+cl_import(this, {
+   cl_executor = {
+      "Serial",
+      "is_serial",
+   },
+   cl_types = {
+      "is_callable",
+   },
+   cl_list = {{map = "map_list"}},
+   cl_table = {"table_to_string"},
+   cl_named = {"Named"},
+   cl_option = {"None"},
+   cl_function = {"id"},
+})
+
+--- System index
+System = {}
+
+--- System metatable
+SystemMeta = {
+   __index = System
+}
+
+is_system = Named.as(
+   "system",
+   function(t)
+      return getmetatable(t) == SystemMeta
+   end
+)
+
+function System.new(name)
+   return setmetatable(
+      {
+         _name = name,
+         _inputs = {},
+         _outputs = {},
+         _f = id
+      },
+      SystemMeta
+   )
+end
+
+function System:reads(...)
+   local inputs = {...}
+   for i=1,#inputs do
+      local input = inputs[i]
+      if not input then
+         assert(
+            nil,
+            string.format(
+               "Invalid input at index %s:\n%s",
+               i, table_to_string(inputs)
+            )
+         )
+      end
+      if not input._get or not input._set then
+         assert(
+            nil,
+            string.format(
+               "Input is not a Lens: %s",
+               input
+            )
+         )
+      end
+   end
+   self._inputs = inputs
+   return self
+end
+
+function System:writes(...)
+   local outputs = {...}
+   for i=1,#outputs do
+      local output = outputs[i]
+      if not output._get or not output._set then
+         assert(
+            nil,
+            string.format(
+               "Output is not a Lens: %s",
+               output
+            )
+         )
+      end
+   end
+   self._outputs = outputs
+   return self
+end
+
+function System:via(f)
+   if not is_callable(f) then
+      assert(
+         nil,
+         string.format("System body is not a callable value: %s", f)
+      )
+   end
+   self._f = f
+   return self
+end
+
+function SystemMeta:__call(ctx)
+   --[[
+   printf(
+      "call:\nSys: %s\nCtx: %s",
+      self,
+      table_to_string(ctx)
+   )
+   --]]
+   --printf("system: %s", table_to_string(self))
+
+   local inputs = {}
+   for i=1,#self._inputs do
+      local lens = self._inputs[i]
+      local v = lens:get(ctx)
+      if v == None then
+         return ctx
+      end
+      table.insert(inputs, v)
+   end
+   --printf("inputs %s", table_to_string(inputs))
+
+   local outputs = {self._f(unpack(inputs))}
+   --printf("outputs %s", table_to_string(outputs))
+
+   for i=1,#self._outputs do
+      local output = outputs[i]
+      local lens = self._outputs[i]
+      lens:set(ctx, output)
+   end
+
+   return ctx
+end
+
+function SystemMeta.__tostring(self)
+   return string.format(
+      "%s(%s) => (%s)",
+      self._name,
+      table.concat(map_list(self._inputs, tostring), ", "),
+      table.concat(map_list(self._outputs, tostring), ", ")
+   )
+end
+
+function SystemMeta.__concat(a, b)
+   if is_system(b) then
+      return Serial.new(a, b)
+   elseif is_serial(b) then
+      b:push_front(a)
+      return b
+   else
+      assert(
+         nil,
+         string.format(
+            "Invalid concatenation:\nLHS: %s\nRHS: %s",
+            a, b
+         )
+      )
+   end
+end

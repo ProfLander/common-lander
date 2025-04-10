@@ -1,0 +1,163 @@
+----------------------------------------------------------------------------
+-- Common Lander: Executor
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+cl_import(this, {
+   cl_types = {
+      "is_callable"
+   },
+   cl_ord_set = {
+      "OrdSet"
+   },
+   cl_table = {
+      "table_to_string"
+   },
+   cl_string = {
+      "indent"
+   }
+})
+
+--- Executor index
+Executor = {}
+
+--- Executor metatable
+ExecutorMeta = {
+    __index = Executor,
+}
+
+function Executor.new(mt)
+   return function(...)
+      local lst = {...}
+      for i=1,#lst do
+         local f = lst[i]
+         if not is_callable(f) then
+            assert(
+               nil,
+               string.format(
+                  "Executor member is not a callable value:\nMember: %s\nContext: %s",
+                  f, table_to_string(lst)
+               )
+            )
+         end
+      end
+
+      return setmetatable(
+         { _set = OrdSet.new(unpack(lst)) },
+         mt
+      )
+   end
+end
+
+
+function ExecutorMeta.__tostring(name)
+   return function(this)
+      local out = name .. "["
+      for i=1,#this._set._lst do
+         out = out .. indent("\n" .. tostring(this._set._lst[i]) .. ",")
+      end
+      out = out .. "\n]"
+      return out
+   end
+end
+
+function ExecutorMeta.__concat(mt, ind, name)
+   return function(a, b)
+      if not getmetatable(b) == mt then
+         assert(
+            nil,
+            string.format("Not a %s: %s", name, b)
+         )
+      end
+      return ind.new(unpack((a._set .. b._set)._lst))
+   end
+end
+
+
+--- Serial index
+Serial = {}
+
+--- Serial metatable
+SerialMeta = {
+   __index = function(this, key)
+      return this._set[key] or Serial[key]
+   end
+}
+
+Serial.new = Executor.new(SerialMeta)
+
+local serial_concat = ExecutorMeta.__concat(SerialMeta, Serial, "Serial")
+SerialMeta.__concat = function(a, b)
+   if a == nil or b == nil then
+      assert(
+         nil,
+         string.format("Cannot concatenate nil:\nLHS: %s\nRHS: %s", a, b)
+      )
+   end
+
+   --[[
+   if is_schedule(b) then
+      return b:concat(a)
+   elseif is_serial(b) then
+      for i=1,#a._lst do
+         for j=1,#b._lst do
+            if a._lst[i] == a._lst[j] then
+               return a .. b .. Schedule.new()
+            end
+         end
+      end
+
+      return serial_concat(a, b)
+   elseif is_system(b) then
+      a:push_back(b)
+      return a
+   end
+   --]]
+
+   assert(
+      nil,
+      string.format(
+         "Invalid concatenation:\nLHS: %s\nRHS: %s",
+         a, b
+      )
+   )
+end
+
+SerialMeta.__tostring = ExecutorMeta.__tostring("Serial")
+
+function is_serial(t)
+   return getmetatable(t) == SerialMeta
+end
+
+function SerialMeta:__call(...)
+   local acc = {...}
+   for i=1,#self._set._lst do
+      local f = self._set._lst[i]
+      acc = {f(unpack(acc))}
+   end
+   return unpack(acc)
+end
+
+--- Parallel index
+Parallel = {}
+
+--- Parallel metatable
+ParallelMeta = { __index = Parallel }
+
+Parallel.new = Executor.new(ParallelMeta)
+
+ParallelMeta.__tostring = ExecutorMeta.__tostring("Parallel")
+
+function is_parallel(t)
+   return getmetatable(t) == ParallelMeta
+end
+
+function ParallelMeta:__call(...)
+   local acc = {...}
+   for i=1,#self._set._lst do
+      local f = self._set._lst[i]
+      acc = {f(unpack(acc))}
+   end
+   return unpack(acc)
+end

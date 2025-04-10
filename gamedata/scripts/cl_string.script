@@ -62,3 +62,7 @@ function parse_vector(str)
    )
 end
 
+--- Increase the given string's indentation by three spaces
+function indent(s)
+   return s:gsub("\n", "\n   ")
+end

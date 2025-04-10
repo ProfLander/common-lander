@@ -1,0 +1,21 @@
+----------------------------------------------------------------------------
+-- Common Lander: Optional Values
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Inhabited equivalent of nil
+--- Useful for retaining a 'nothing' semantic while avoiding nil's
+--- special interactions with table structure
+None, NoneMeta = {}, {}
+
+function NoneMeta:__index() end
+function NoneMeta:__newindex() end
+function NoneMeta:__eq(b)
+   return b == None
+end
+
+setmetatable(
+    None,
+    NoneMeta
+)

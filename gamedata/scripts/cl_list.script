@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------
--- GoldenOrb: List Utilities
+-- Common Lander: Lists
 ----------------------------------------------------------------------------
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
@@ -41,16 +41,46 @@ function reverse(lst)
    return out
 end
 
----@param lst any[]
----@param init any
----@param f fun(acc: any, next: any): any
----@return any
-function fold(lst, init, f)
+function foldl(lst, init, f)
    local acc = init
    for i=1,#lst do
       acc = f(acc, lst[i])
    end
    return acc
+end
+
+function foldr(lst, init, f)
+   local acc = init
+   for i=#lst,1,-1 do
+      acc = f(lst[i], acc)
+   end
+   return acc
+end
+
+fold = foldl
+
+function foldl_and(lst, f)
+   return foldl(
+      lst,
+      {nil, true},
+      function(acc, next)
+         local prev,flag = unpack(acc)
+
+         if not prev then
+            return {next, flag}
+         end
+
+         return {next, flag and f(prev, next)}
+      end
+   )
+end
+
+function zip(la, lb)
+   local out = {}
+   for i=1,math.min(#la, #lb) do
+      out[i] = {la[i], lb[i]}
+   end
+   return out
 end
 
 ---Call f on each member of lst, ignoring return values.
@@ -68,6 +98,7 @@ function concat(...)
    local out = {}
    for i=1,#lists do
       local list = lists[i]
+      assert(type(list) == "table", "List is not a table")
       out = fold(
          list,
          out,
@@ -78,4 +109,82 @@ function concat(...)
       )
    end
    return out
+end
+
+--- Split a list into a list of lists by delimiter function
+function split(lst, on)
+   local out = {}
+   local acc = {}
+   for i=1,#lst do
+      local itm = lst[i]
+      if on(itm) then
+         table.insert(out, acc)
+         acc = {}
+      else
+         table.insert(acc, itm)
+      end
+   end
+   if #acc > 0 then
+      table.insert(out, acc)
+   end
+   return out
+end
+
+function list_to_string(lst)
+   local out = "["
+   for i=1,#lst do
+      out = out .. indent("\n" .. tostring(lst[i]) .. ",")
+   end
+   out = out .. "\n]"
+   return out
+end
+
+function enumerate(lst)
+   local out = {}
+   for i=1,#lst do
+      table.insert(out, {i, lst[i]})
+   end
+   return out
+end
+
+--- Return the first index for which the given function returns true, else nil
+function index_of(lst, f)
+   for i=1,#lst do
+      if f(lst[i]) then
+         return i
+      end
+   end
+end
+
+--- Return the amount of times f returns true for items in the given list
+function count(lst, f)
+   local acc = 0
+   for i=1,#lst do
+      if f(lst[i]) then
+         acc = acc + 1
+      end
+   end
+   return acc
+end
+
+--- Return a value -> count table of items in the given list
+function counts(lst)
+   local seen = {}
+   for i=1,#lst do
+      seen[lst[i]] = (seen[lst[i]] ~= nil and seen[lst[i]] + 1) or 1
+   end
+   return seen
+end
+
+--- Return true if lst contains no duplicate elements
+function unique(lst)
+   local seen = counts(lst)
+
+   for _,v in pairs(seen) do
+      if v > 1 then
+         return false
+      end
+   end
+
+   return true
 end

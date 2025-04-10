@@ -1,0 +1,44 @@
+----------------------------------------------------------------------------
+-- Common Lander: Error Handling
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+-- Constants
+
+ERROR_DURATION = 120 -- 2 minutes
+
+-- Implementation 
+
+function handle_error(e, stack)
+   local msg = "ERROR: " .. e
+
+   local stack_lines = str_explode(trim(stack), "\n")
+   if db.actor then
+      for i=#stack_lines,1,-1 do
+         news_manager.send_tip(
+            db.actor,
+            stack_lines[i],
+            nil,
+            nil,
+            ERROR_DURATION * 1000
+         )
+      end
+
+      news_manager.send_tip(
+         db.actor,
+         msg,
+         nil,
+         nil,
+         ERROR_DURATION * 1000
+      )
+   end
+
+   actor_menu.set_fade_msg(
+      msg,
+      ERROR_DURATION,
+      {R = 255, G = 0, B = 0}
+   )
+
+   printe(msg .. stack)
+end

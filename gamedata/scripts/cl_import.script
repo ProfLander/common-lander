@@ -1,0 +1,84 @@
+----------------------------------------------------------------------------
+-- Common Lander: Import Primitive
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+local table_to_string = cl_table.table_to_string
+
+getmetatable(this).__call = function(self, dst, imps)
+   assert(dst ~= nil, "Import destination is nil")
+   -- Return a closure with destination table captured
+   -- so importing scripts only have to pass their self-reference once
+   local mt = getmetatable(dst)
+   local idx = mt.__index
+
+   -- Lift existing index into a function
+   mt.__index = function(t, k)
+      local ty = type(idx)
+      if ty == "table" then
+         return idx[k]
+      elseif ty == "function" then
+         return idx(t, k)
+      else
+         assert(
+            nil,
+            "Invalid index: %s (%s)",
+            idx, ty
+         )
+      end
+   end
+
+   for k_src,args in pairs(imps) do
+      local redir = {}
+
+      -- Iterate argument table and build key redirect table
+      for i=1,#args do
+         local arg = args[i]
+
+         local k_in = nil
+         local k_out = nil
+         if type(arg) == "string" then
+            k_in, k_out = arg, arg
+         elseif type(arg) == "table" then
+            k_in, k_out = next(arg)
+         else
+            assert(
+               nil,
+               string.format(
+                  "Invalid import key:\nKey: %s\nSrc: %s",
+                  k, src
+               )
+            )
+         end
+
+         redir[k_out] = k_in
+      end
+
+      -- Patch index with support for 
+      local ind = mt.__index
+      mt.__index = function(t, k)
+         local red = redir[k]
+
+         if red then
+            local src = _G[k_src]
+
+            if src == nil then
+               assert(
+                  nil,
+                  string.format(
+                     "Source table is nil:\nDst: %s\nImps: %s",
+                     table_to_string(dst),
+                     table_to_string(imps)
+                  )
+               )
+            end
+
+            return src[red]
+         end
+
+         return ind(t, k)
+      end
+   end
+end
+

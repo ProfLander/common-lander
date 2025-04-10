@@ -1,0 +1,122 @@
+----------------------------------------------------------------------------
+-- Common Lander: Types
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+cl_import(this, {
+   cl_named = {"Named"}
+})
+
+--- Type predicates
+is_any = Named.as(
+   "any",
+   function() return true end
+)
+
+is_nil = Named.as(
+   "nil",
+   function(t)
+      return t == nil
+   end
+)
+
+is_non_nil = Named.as(
+   "non_nil",
+   function(t)
+      return t ~= nil
+   end
+)
+
+is_boolean = Named.as(
+   "boolean",
+   function(t)
+      return type(t) == "boolean"
+   end
+)
+
+is_number = Named.as(
+   "number",
+   function(t)
+      return type(t) == "number"
+   end
+)
+
+is_string = Named.as(
+   "string",
+   function(t)
+      return type(t) == "string"
+   end
+)
+
+is_table = Named.as(
+   "table",
+   function(t)
+      return type(t) == "table" and getmetatable(t) == nil
+   end
+)
+
+is_indexable = Named.as(
+   "indexable",
+   function(t)
+      if is_table(t) then
+         return true
+      end
+
+      local mt = getmetatable(t)
+      if mt and mt.__index ~= nil then
+         return true
+      end
+
+      return false
+   end
+)
+
+is_callable = Named.as(
+   "callable",
+   function(f)
+      if type(f) == "function" then
+         return true
+      end
+
+      local mt = getmetatable(f)
+      if not mt then
+         return false
+      end
+
+      return mt.__call ~= nil
+   end
+)
+
+is_vector = Named.as(
+   "vector",
+   function(t)
+      return type(t) == "userdata"
+         and is_number(t.x)
+         and is_number(t.y)
+         and is_number(t.z)
+   end
+)
+
+is_matrix= Named.as(
+   "matrix",
+   function(t)
+      return type(t) == "userdata"
+         and is_vector(t.i)
+         and is_vector(t.j)
+         and is_vector(t.k)
+         and is_vector(t.c)
+   end
+)
+
+function or_is(a, b)
+   return function(t)
+      return a(t) or b(t)
+   end
+end
+
+function and_is(a, b)
+   return function(t)
+      return a(t) and b(t)
+   end
+end

@@ -1,0 +1,86 @@
+----------------------------------------------------------------------------
+-- Common Lander: Named Values
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Named constructor storage
+Named = {}
+
+--- Named metatable
+NamedMeta = {}
+
+function Named.new(name, this, as)
+   assert(type(name) == "string", "Name is not a string")
+   assert(this ~= nil, "Named values must not be nil")
+   assert(type(as) == "boolean", "As-flag must be a boolean")
+
+   return setmetatable(
+      {
+         _name = name,
+         _this = this,
+         _as = as,
+      },
+      NamedMeta
+   )
+end
+
+function NamedMeta:__index(key)
+   return self._this[key]
+end
+
+function NamedMeta:__call(...)
+   return self._this(...)
+end
+
+function NamedMeta:__tostring()
+   if self._as then
+      return self._name
+   end
+
+   local out = self._name
+   if self._this ~= nil then
+      out = out .. ": " .. tostring(self._this)
+   end
+   return out
+end
+
+is_named = function(t)
+   return getmetatable(t) == NamedMeta
+end
+
+function NamedMeta.__concat(a, b)
+   --print("Named.__concat:", a, b)
+
+   local name = a._name
+
+   -- Unwrap incoming named
+   if is_named(b) then
+      name = name .. "." .. b._name
+      b = b._this
+   end
+
+   return Named.new(
+      name,
+      a._this .. b,
+      a._as
+   )
+end
+
+function NamedMeta.__eq(a, b)
+   --print("Named.__eq:", a, b)
+   local x = a._this or a
+   --print("x:", x)
+   local y = b._this or b
+   --print("y:", y)
+   return x == y
+end
+
+--- Named constructor
+function Named.with(name, this)
+   return Named.new(name, this, false)
+end
+
+function Named.as(name, this)
+   return Named.new(name, this, true)
+end

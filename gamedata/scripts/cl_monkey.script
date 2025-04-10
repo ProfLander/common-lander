@@ -1,0 +1,36 @@
+----------------------------------------------------------------------------
+-- Common Lander: Monkey Patching
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Run g before f
+function monkey_before(f, g)
+   return function(...)
+      g(...)
+      return f(...)
+   end
+end
+
+--- Run g after f
+function monkey_after(f, g)
+   return function(...)
+      local out = f(...)
+      g(...)
+      return out
+   end
+end
+
+--- Run g and use its outputs as inputs to f
+function monkey_around(f, g)
+   return function(...)
+      return f(g(...))
+   end
+end
+
+--- Run f and use its outputs as inputs to g
+function monkey_inside(f, g)
+   return function(...)
+      return g(f(...))
+   end
+end

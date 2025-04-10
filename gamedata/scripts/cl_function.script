@@ -1,8 +1,15 @@
--- Imports
+----------------------------------------------------------------------------
+-- Common Lander: Functions
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
 
---- List
-local fold = cl_list.fold
-local reverse = cl_list.reverse
+cl_import(this, {
+   cl_list = {
+      "fold",
+      "reverse"
+   }
+})
 
 -- Implementation
 
@@ -95,3 +102,9 @@ function protected(e, f)
    end
 end
 
+-- Curried == operator
+function eq(a)
+   return function(b)
+      return a == b
+   end
+end

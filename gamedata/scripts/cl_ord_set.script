@@ -1,0 +1,88 @@
+----------------------------------------------------------------------------
+-- Common Lander: Ordered Set
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+cl_import(this, {
+   cl_list = {
+      "unique",
+      "count",
+      "list_to_string",
+      { concat = "concat_list"},
+   },
+   cl_named = {"Named"},
+   cl_string = {"indent"},
+})
+
+--- Ordered set index
+OrdSet = {}
+
+--- Ordered set metatable
+OrdSetMeta = { __index = OrdSet }
+
+function OrdSet.new(...)
+   local lst = {...}
+   if not unique(lst) then
+      assert(
+         nil,
+         string.format(
+            "An ordered set may not contain duplicate members:\n%s",
+            list_to_string(lst)
+         )
+      )
+   end
+   return setmetatable(
+      { _lst = lst },
+      OrdSetMeta
+   )
+end
+
+is_ord_set = Named.as(
+   "ord_set",
+   function(t)
+      return getmetatable(t) == OrdSetMeta
+   end
+)
+
+function OrdSet:push_front(t)
+   if count(self._lst, function(u) return u == t end) > 0 then
+      assert(
+         nil,
+         string.format(
+            "OrdSet may not contain duplicates:\nSrc: %s\nDst: %s",
+            t, self
+         )
+      )
+   end
+
+   table.insert(self._lst, 1, t)
+end
+
+function OrdSet:push_back(t)
+   if count(self._lst, function(u) return u == t end) > 0 then
+      assert(nil, "OrdSet may not contain duplicates.")
+   end
+
+   table.insert(self._lst, t)
+end
+
+function OrdSetMeta:__tostring()
+   local out = "OrdSet["
+   for i=1,#self._lst do
+      out = out .. indent("\n" .. tostring(self._lst[i]) .. ",")
+   end
+   out = out .. "\n]"
+   return out
+end
+
+function OrdSetMeta.__concat(a, b)
+   if not is_ord_set(b) then
+      assert(
+         nil,
+         string.format("Invalid concatenation:\nLHS: %s\nRHS: %s", a, b)
+      )
+   end
+
+   return OrdSet.new(unpack(concat_list(a._lst, b._lst)))
+end

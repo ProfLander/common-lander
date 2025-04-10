@@ -28,7 +28,7 @@
         "cl_lens",
         "cl_list",
         "cl_logging",
-        "_cl_schedule",
+        "cl_schedule",
         "cl_string",
     ],
 }

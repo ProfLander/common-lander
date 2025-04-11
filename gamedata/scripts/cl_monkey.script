@@ -1,6 +1,10 @@
 ----------------------------------------------------------------------------
 -- Common Lander: Monkey Patching
 ----------------------------------------------------------------------------
+--
+-- Utilities for monkeying around with other people's functions.
+--
+----------------------------------------------------------------------------
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
@@ -32,5 +36,13 @@ end
 function monkey_inside(f, g)
    return function(...)
       return g(f(...))
+   end
+end
+
+--- Call g with f and f's arguments
+--- Allows g to decide whether f should be called
+function monkey_continue(f, g)
+   return function(...)
+      return g(f, ...)
    end
 end

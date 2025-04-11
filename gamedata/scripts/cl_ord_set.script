@@ -9,19 +9,15 @@ cl_import(this, {
       "unique",
       "count",
       "list_to_string",
-      { concat = "concat_list"},
+      "concat",
    },
    cl_named = {"Named"},
    cl_string = {"indent"},
+   cl_newtype = {"Newtype"},
+   cl_monkey = {"monkey_continue"}
 })
 
---- Ordered set index
-OrdSet = {}
-
---- Ordered set metatable
-OrdSetMeta = { __index = OrdSet }
-
-function OrdSet.new(...)
+OrdSet, OrdSetMeta = Newtype(function(...)
    local lst = {...}
    if not unique(lst) then
       assert(
@@ -32,11 +28,8 @@ function OrdSet.new(...)
          )
       )
    end
-   return setmetatable(
-      { _lst = lst },
-      OrdSetMeta
-   )
-end
+   return lst
+end)
 
 is_ord_set = Named.as(
    "ord_set",
@@ -46,7 +39,7 @@ is_ord_set = Named.as(
 )
 
 function OrdSet:push_front(t)
-   if count(self._lst, function(u) return u == t end) > 0 then
+   if count(self._inner, function(u) return u == t end) > 0 then
       assert(
          nil,
          string.format(
@@ -56,21 +49,59 @@ function OrdSet:push_front(t)
       )
    end
 
-   table.insert(self._lst, 1, t)
+   table.insert(self._inner, 1, t)
 end
 
 function OrdSet:push_back(t)
-   if count(self._lst, function(u) return u == t end) > 0 then
+   if count(self._inner, function(u) return u == t end) > 0 then
       assert(nil, "OrdSet may not contain duplicates.")
    end
 
-   table.insert(self._lst, t)
+   table.insert(self._inner, t)
+end
+
+function OrdSet:insert(i, t)
+   if count(self._inner, function(u) return u == t end) > 0 then
+      assert(nil, "OrdSet may not contain duplicates.")
+   end
+
+   table.insert(self._inner, i, t)
+end
+
+function OrdSet:unwrap()
+   return self._inner
+end
+
+function OrdSet:len()
+   return #self._inner
+end
+
+OrdSetMeta.__index = monkey_continue(
+   OrdSetMeta.__index,
+   function(cc, this, k)
+      if type(k) == "number" then
+         return this._inner[k]
+      end
+      return cc(this, k)
+   end
+)
+
+function OrdSetMeta:__newindex(k, v)
+   if type(k) ~= "number" then
+      return
+   end
+
+   if count(self._inner, function(u) return u == v end) > 0 then
+      assert(nil, "OrdSet may not contain duplicates.")
+   end
+
+   self._inner[k] = v
 end
 
 function OrdSetMeta:__tostring()
    local out = "OrdSet["
-   for i=1,#self._lst do
-      out = out .. indent("\n" .. tostring(self._lst[i]) .. ",")
+   for i=1,#self._inner do
+      out = out .. indent("\n" .. tostring(self._inner[i]) .. ",")
    end
    out = out .. "\n]"
    return out
@@ -84,5 +115,5 @@ function OrdSetMeta.__concat(a, b)
       )
    end
 
-   return OrdSet.new(unpack(concat_list(a._lst, b._lst)))
+   return OrdSet.new(unpack(concat(a:unwrap(), b:unwrap())))
 end

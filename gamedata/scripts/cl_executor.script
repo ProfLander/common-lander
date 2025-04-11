@@ -54,8 +54,8 @@ end
 function ExecutorMeta.__tostring(name)
    return function(this)
       local out = name .. "["
-      for i=1,#this._set._lst do
-         out = out .. indent("\n" .. tostring(this._set._lst[i]) .. ",")
+      for i=1,this._set:len() do
+         out = out .. indent("\n" .. tostring(this._set[i]) .. ",")
       end
       out = out .. "\n]"
       return out
@@ -70,7 +70,7 @@ function ExecutorMeta.__concat(mt, ind, name)
             string.format("Not a %s: %s", name, b)
          )
       end
-      return ind.new(unpack((a._set .. b._set)._lst))
+      return ind.new(unpack((a._set .. b._set):unwrap()))
    end
 end
 
@@ -100,9 +100,9 @@ SerialMeta.__concat = function(a, b)
    if is_schedule(b) then
       return b:concat(a)
    elseif is_serial(b) then
-      for i=1,#a._lst do
-         for j=1,#b._lst do
-            if a._lst[i] == a._lst[j] then
+      for i=1,#a do
+         for j=1,#b do
+            if a[i] == a[j] then
                return a .. b .. Schedule.new()
             end
          end
@@ -132,8 +132,8 @@ end
 
 function SerialMeta:__call(...)
    local acc = {...}
-   for i=1,#self._set._lst do
-      local f = self._set._lst[i]
+   for i=1,self._set:len() do
+      local f = self._set[i]
       acc = {f(unpack(acc))}
    end
    return unpack(acc)
@@ -155,8 +155,8 @@ end
 
 function ParallelMeta:__call(...)
    local acc = {...}
-   for i=1,#self._set._lst do
-      local f = self._set._lst[i]
+   for i=1,self._set:len() do
+      local f = self._set[i]
       acc = {f(unpack(acc))}
    end
    return unpack(acc)

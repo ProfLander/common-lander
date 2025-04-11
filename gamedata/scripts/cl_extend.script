@@ -1,0 +1,27 @@
+----------------------------------------------------------------------------
+-- Common Lander: Extend
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+cl_import(this, {
+   cl_data = {"Data"},
+})
+
+function Extend(pt, pm)
+   local ty = {}
+   local mt = {}
+   for k,v in pairs(pt) do
+      ty[k] = v
+   end
+   for k,v in pairs(pm) do
+      mt[k] = v
+   end
+   mt.__index = function(t, k)
+      return ty[k] or pm.__index(t, k)
+   end
+   ty.new = function(...)
+      return setmetatable(pt.new(...), mt)
+   end
+   return ty, mt
+end

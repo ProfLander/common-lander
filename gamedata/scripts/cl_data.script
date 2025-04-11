@@ -1,0 +1,18 @@
+----------------------------------------------------------------------------
+-- Common Lander: Data Types
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Given a constructor, return a data type
+function Data(new)
+   local dt = {}
+   local mt = {}
+   mt.__index = function(_, k)
+      return dt[k]
+   end
+   dt.new = function(...)
+      return setmetatable(new(...), mt)
+   end
+   return dt, mt
+end

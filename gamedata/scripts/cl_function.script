@@ -44,20 +44,6 @@ function compose(...)
    )
 end
 
---- Use function B to modify the input of function A
-function advise_before(a, b)
-   return function(...)
-      return a(b(...))
-   end
-end
-
---- Use function B to modify the output of function A
-function advise_after(a, b)
-   return function(...)
-      return b(a(...))
-   end
-end
-
 --- Reverse the order of the given function's arguments
 ---@param f fun(...: any): any
 ---@return fun(...: any): any

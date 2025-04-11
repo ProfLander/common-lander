@@ -1,0 +1,25 @@
+----------------------------------------------------------------------------
+-- Common Lander: Identity
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+cl_import(this, {
+    cl_newtype = {"Newtype"},
+    cl_function = {"id"},
+    cl_string = {"indent"}
+})
+
+--- The identity newtype
+--- Holds whatever it is given
+local Identity, IdentityMeta = Newtype(id)
+
+--- Return the Identity's wrapped value
+function Identity:unwrap()
+   return self._inner
+end
+
+--- Wrap the inner value's string representation in Identity()
+function IdentityMeta:__tostring()
+   return "Identity(" .. tostring(self._inner) .. ")"
+end

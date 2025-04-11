@@ -1,0 +1,34 @@
+----------------------------------------------------------------------------
+-- Common Lander: Newtypes
+----------------------------------------------------------------------------
+-- Implemented by Lhan
+----------------------------------------------------------------------------
+
+--- Given a constructor function, return an opaque wrapper type
+--- and its metatable
+---@param new fun(...: any): any
+---@return table, metatable
+function Newtype(new)
+   -- Create our type
+   local ty = {}
+
+   -- Create our type's metatable
+   local mt = {}
+
+   -- Index into the type table
+   mt.__index = function(_, k)
+      return ty[k]
+   end
+
+   -- Disallow writes
+   mt.__newindex = function()
+   end
+
+   -- Create our type's constructor from the provided one
+   ty.new = function(...)
+      return setmetatable({ _inner = new(...) }, mt)
+   end
+
+   return ty, mt
+end
+

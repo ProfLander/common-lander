@@ -21,6 +21,8 @@ function id(...)
 end
 
 --- Returns a function that returns the given parameters unconditionally
+---@param ... any
+---@return fun(...: any): any
 function const(...)
    local args = {...}
    return function()

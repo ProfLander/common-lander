@@ -15,7 +15,7 @@ cl_import(this, {
    cl_list = {{map = "map_list"}},
    cl_table = {"table_to_string"},
    cl_named = {"Named"},
-   cl_option = {"None"},
+   cl_none = {"None"},
    cl_function = {"id"},
 })
 

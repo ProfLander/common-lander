@@ -4,31 +4,40 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
+cl_import(this, {
+   cl_data = {"Data"},
+   cl_function = {"const"},
+   cl_monkey = {"monkey_continue"},
+})
+
 --- Given a constructor function, return an opaque wrapper type
 --- and its metatable
 ---@param new fun(...: any): any
+---@param pass boolean?
 ---@return table, metatable
-function Newtype(new)
-   -- Create our type
-   local ty = {}
+function Newtype(new, pass)
+   local ty, mt = Data(function(...)
+         return {_inner = new(...)}
+   end)
 
-   -- Create our type's metatable
-   local mt = {}
+   if pass then
+      -- If this is a passthrough newtype,
+      -- fallback to its inner value on index failure
+      mt.__index = monkey_continue(
+         mt.__index,
+         function(cc, t, k)
+            return cc(t, k) or t._inner[k]
+         end
+      )
 
-   -- Index into the type table
-   mt.__index = function(_, k)
-      return ty[k]
-   end
-
-   -- Disallow writes
-   mt.__newindex = function()
-   end
-
-   -- Create our type's constructor from the provided one
-   ty.new = function(...)
-      return setmetatable({ _inner = new(...) }, mt)
+      -- And allow writes to the inner value
+      mt.__newindex = function(t, k, v)
+         t._inner[k] = v
+      end
+   else
+      -- Otherwise, disallow writes
+      mt.__newindex = const()
    end
 
    return ty, mt
 end
-

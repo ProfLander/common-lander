@@ -49,7 +49,7 @@ function OrdSet:push_front(t)
       )
    end
 
-   table.insert(self._inner, 1, t)
+   return table.insert(self._inner, 1, t)
 end
 
 function OrdSet:push_back(t)
@@ -57,7 +57,7 @@ function OrdSet:push_back(t)
       assert(nil, "OrdSet may not contain duplicates.")
    end
 
-   table.insert(self._inner, t)
+   return table.insert(self._inner, t)
 end
 
 function OrdSet:insert(i, t)
@@ -65,7 +65,11 @@ function OrdSet:insert(i, t)
       assert(nil, "OrdSet may not contain duplicates.")
    end
 
-   table.insert(self._inner, i, t)
+   return table.insert(self._inner, i, t)
+end
+
+function OrdSet:remove(i)
+   return table.remove(self._inner, i)
 end
 
 function OrdSet:unwrap()

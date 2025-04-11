@@ -55,7 +55,7 @@ getmetatable(this).__call = function(self, dst, imps)
          redir[k_out] = k_in
       end
 
-      -- Patch index with support for 
+      -- Patch index with import redirection
       local ind = mt.__index
       mt.__index = function(t, k)
          local red = redir[k]
@@ -67,7 +67,8 @@ getmetatable(this).__call = function(self, dst, imps)
                assert(
                   nil,
                   string.format(
-                     "Source table is nil:\nDst: %s\nImps: %s",
+                     "Source table for key %s is nil:\nDst: %s\nImps: %s",
+                     k_src,
                      table_to_string(dst),
                      table_to_string(imps)
                   )

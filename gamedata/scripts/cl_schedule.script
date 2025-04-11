@@ -23,7 +23,7 @@ cl_import(this, {
    },
    cl_table = {"table_to_string"},
    cl_string = {"indent"},
-   cl_option = {"None"},
+   cl_none = {"None"},
    cl_named = {"Named"},
    cl_system = {
       "System",
@@ -73,11 +73,11 @@ function Schedule:concat(a)
    end
 
    -- If this is an empty schedule, emplace the values directly
-   if self._ser._set:len() == 0 then
-      for i=1,a._set:len() do
-         local itm = a._set[i]
+   if self._ser:len() == 0 then
+      for i=1,a:len() do
+         local itm = a[i]
          local par = Parallel.new(itm)
-         self._ser._set:push_back(par)
+         self._ser:push_back(par)
       end
 
       --printf("Out: %s", self)
@@ -87,13 +87,13 @@ function Schedule:concat(a)
 
    -- Find indices of pre-existing entries to use as anchor points
    local inds = {}
-   for i=1,a._set:len() do
-      local itm = a._set[i]
+   for i=1,a:len() do
+      local itm = a[i]
       inds[i] = -1
-      for j=1,self._ser._set:len() do
-         local par = self._ser._set[j]
+      for j=1,self._ser:len() do
+         local par = self._ser[j]
          local ind = index_of(
-            par._set:unwrap(),
+            par:unwrap(),
             function(cand)
                return cand == itm
             end
@@ -152,7 +152,7 @@ function Schedule:concat(a)
       --[[
       printf("prev: %s", prev)
       printf("ind: %s", ind)
-      printf("entry: %s", a._set[i])
+      printf("entry: %s", a[i])
       --]]
 
       if ind == -1 then
@@ -162,19 +162,16 @@ function Schedule:concat(a)
       if not prev then
          prev = ind
       elseif ind == prev then
-         --printf("list: %s", unpack(self._ser._set[ind]._set))
+         --printf("list: %s", self._ser[ind])
          local target = index_of(
-            self._ser._set[ind]._set,
+            self._ser[ind],
             function(cand)
-               return cand == a._set[i]
+               return cand == a[i]
             end
          )
          --printf("target: %s", target)
-         local res = table.remove(
-            self._ser._set[ind]._set,
-            target
-         )
-         self._ser._set:insert(ind + 1, Parallel.new(res))
+         local res = self._ser[ind]:remove(target)
+         self._ser:insert(ind + 1, Parallel.new(res))
          acc = acc + 1
       end
 
@@ -198,7 +195,7 @@ function Schedule:concat(a)
          local delta = ind - last
          --printf("gap: %s, delta: %s", gap, delta)
          while gap > delta - 1 do
-            self._ser._set:insert(ind, Parallel.new())
+            self._ser:insert(ind, Parallel.new())
             gap = gap - 1
             ofs = ofs + 1
          end
@@ -229,7 +226,7 @@ function Schedule:concat(a)
          --]]
          if next == -1 then
             --printf("unindexed, accumulating")
-            table.insert(acc, a._set[foo])
+            table.insert(acc, a[foo])
          else
             base = next
             for i=1,#acc do
@@ -244,10 +241,10 @@ function Schedule:concat(a)
                printf("inserting %s", itm)
                printf(
                   "to parallel %s",
-                  list_to_string(self._ser._set[target]._set)
+                  list_to_string(self._ser[target])
                )
                --]]
-               self._ser._set[target]._set:push_back(
+               self._ser[target]:push_back(
                   itm
                )
             end
@@ -260,12 +257,12 @@ function Schedule:concat(a)
    --print("rem:", unpack(rem))
 
    for i=1,#rem do
-      if not self._ser._set[base + i] then
+      if not self._ser[base + i] then
          --print("allocating new parallel at", base + 1)
-         self._ser._set:push_back(Parallel.new())
+         self._ser:push_back(Parallel.new())
       end
       --print("inserting to parallel", base + i)
-      self._ser._set[base + i]._set:push_back(
+      self._ser[base + i]:push_back(
          table.remove(rem, 1)
       )
    end

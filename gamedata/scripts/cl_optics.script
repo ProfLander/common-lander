@@ -7,7 +7,7 @@
 cl_import(this, {
    cl_types = {"is_callable"},
    cl_function = {"compose"},
-   cl_option = {"None"},
+   cl_none = {"None"},
 })
 
 function get(k)

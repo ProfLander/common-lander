@@ -15,7 +15,4 @@ function NoneMeta:__eq(b)
    return b == None
 end
 
-setmetatable(
-    None,
-    NoneMeta
-)
+setmetatable(None, NoneMeta)

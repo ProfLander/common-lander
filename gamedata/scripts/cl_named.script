@@ -4,49 +4,48 @@
 -- Implemented by Lhan
 ----------------------------------------------------------------------------
 
---- Named constructor storage
-Named = {}
+cl_import(this, {
+   cl_data = {"Data"}
+})
 
---- Named metatable
-NamedMeta = {}
-
-function Named.new(name, this, as)
+Named, NamedMeta = Data(function(name, this, as)
    assert(type(name) == "string", "Name is not a string")
    assert(this ~= nil, "Named values must not be nil")
    assert(type(as) == "boolean", "As-flag must be a boolean")
+   return {
+      _name = name,
+      _this = this,
+      _as = as,
+   }
+end)
 
-   return setmetatable(
-      {
-         _name = name,
-         _this = this,
-         _as = as,
-      },
-      NamedMeta
-   )
+--- Named constructor
+function Named.with(name, this)
+   return Named.new(name, this, false)
+end
+
+function Named.as(name, this)
+   return Named.new(name, this, true)
+end
+
+is_named = function(t)
+   return getmetatable(t) == NamedMeta
 end
 
 function NamedMeta:__index(key)
    return self._this[key]
 end
 
+function NamedMeta:__newindex(key, val)
+   self._this[key] = val
+end
+
+function NamedMeta:__metatable()
+   return getmetatable(self._this)
+end
+
 function NamedMeta:__call(...)
    return self._this(...)
-end
-
-function NamedMeta:__tostring()
-   if self._as then
-      return self._name
-   end
-
-   local out = self._name
-   if self._this ~= nil then
-      out = out .. ": " .. tostring(self._this)
-   end
-   return out
-end
-
-is_named = function(t)
-   return getmetatable(t) == NamedMeta
 end
 
 function NamedMeta.__concat(a, b)
@@ -76,11 +75,16 @@ function NamedMeta.__eq(a, b)
    return x == y
 end
 
---- Named constructor
-function Named.with(name, this)
-   return Named.new(name, this, false)
+
+function NamedMeta:__tostring()
+   if self._as then
+      return self._name
+   end
+
+   local out = self._name
+   if self._this ~= nil then
+      out = out .. ": " .. tostring(self._this)
+   end
+   return out
 end
 
-function Named.as(name, this)
-   return Named.new(name, this, true)
-end

@@ -44,11 +44,22 @@ Schedule = {}
 --- Schedule metatable
 ScheduleMeta = { __index = Schedule }
 
-function Schedule.new()
-   return setmetatable(
-      { _ser = Serial.new() },
-      ScheduleMeta
+function Schedule.new(name)
+   local start = System.new("start")
+   local finish = System.new("finish")
+   local sched = Named.with(
+      name,
+      setmetatable(
+         {
+            _ser = Serial.new(),
+            start = start,
+            finish = finish,
+         },
+         ScheduleMeta
+      )
    )
+   sched:concat(start .. finish)
+   return sched
 end
 
 function is_schedule(t)
@@ -288,43 +299,15 @@ function ScheduleMeta:__call(...)
    return self._ser(...)
 end
 
-on_level_call = Schedule.new()
-on_level_call_start = System.new("level_call_start")
-on_level_call_finish = System.new("level_call_finish")
-on_level_call:concat(on_level_call_start .. on_level_call_finish)
-
-actor_on_update = Schedule.new()
-actor_on_update_start = System.new("actor_on_update_start")
-actor_on_update_finish = System.new("actor_on_update_finish")
-actor_on_update:concat(actor_on_update_start .. actor_on_update_finish)
-
-actor_on_first_update = Schedule.new()
-actor_on_first_update_start = System.new("actor_on_first_update_start")
-actor_on_first_update_finish = System.new("actor_on_first_update_finish")
-actor_on_first_update:concat(
-    actor_on_first_update_start .. actor_on_first_update_finish
-)
-
-actor_on_weapon_fired = Schedule.new()
-actor_on_weapon_fired_start = System.new("actor_on_weapon_fired_start")
-actor_on_weapon_fired_finish = System.new("actor_on_weapon_fired_finish")
-actor_on_weapon_fired:concat(
-   actor_on_weapon_fired_start .. actor_on_weapon_fired_finish
-)
-
-on_key_press = Schedule.new()
-on_key_press_start = System.new("on_key_press_start")
-on_key_press_finish = System.new("on_key_press_finish")
-on_key_press:concat(
-   on_key_press_start .. on_key_press_finish
-)
-
-on_before_mouse_move = Schedule.new()
-on_before_mouse_move_start = System.new("on_before_mouse_move_start")
-on_before_mouse_move_finish = System.new("on_before_mouse_move_finish")
-on_before_mouse_move:concat(
-   on_before_mouse_move_start .. on_before_mouse_move_finish
-)
+on_level_call = Schedule.new("on_level_call")
+actor_on_update = Schedule.new("actor_on_update")
+actor_on_first_update = Schedule.new("actor_on_first_update")
+actor_on_weapon_fired = Schedule.new("actor_on_weapon_fired")
+on_key_press = Schedule.new("on_key_press")
+on_before_mouse_move = Schedule.new("on_before_mouse_move")
+on_before_key_press = Schedule.new("on_before_key_press")
+on_before_key_release = Schedule.new("on_before_key_release")
+on_before_key_hold = Schedule.new("on_before_key_hold")
 
 state = {}
 
@@ -381,8 +364,35 @@ do_on_before_mouse_move = function(x, y, disabled, flags)
       )
       handle_error(out, callstack(false, true))
    end
-   flags.ret_value = state.mouse.override
+   --flags.ret_value = state.mouse.override
    state.mouse = nil
+end
+
+do_on_before_key_press = function(key, mod, disabled, flags)
+   --[[
+   printf(
+      "on_before_key_press: %s, %s, %s, %s",
+      a, b, c, table_to_string(d)
+   )
+   --]]
+end
+
+do_on_before_key_release = function(key, mod, disabled, flags)
+   --[[
+   printf(
+      "on_before_key_release: %s, %s, %s, %s",
+      key, mod, disabled, table_to_string(flags)
+   )
+   --]]
+end
+
+do_on_before_key_hold = function(key, mod, disabled, flags)
+   --[[
+   printf(
+      "on_before_key_hold: %s, %s, %s, %s",
+      key, mod, disabled, table_to_string(flags)
+   )
+   --]]
 end
 
 do_on_key_press = function(key)
@@ -400,20 +410,48 @@ do_on_key_press = function(key)
    state.keyboard = nil
 end
 
+do_gui_on_show = function(name, id)
+   printf("GUI_on_show: %s, %s", name, id)
+end
+
+do_gui_on_hide = function(name, id)
+   printf("GUI_on_hide: %s, %s", name, id)
+end
+
+do_actor_menu_on_mode_changed = function(a, b)
+   printf("actor_menu_on_mode_changed: %s, %s", a, b)
+end
+
 function on_game_start()
    printf("schedule_new on_game_start")
 
-   printf("on_level_call: %s", on_level_call)
-   printf("actor_on_update: %s", actor_on_update)
-   printf("actor_on_first_update: %s", actor_on_first_update)
-   printf("actor_on_weapon_fired: %s", actor_on_weapon_fired)
-   printf("on_before_mouse_move: %s", on_before_mouse_move)
-   printf("on_key_press: %s", on_key_press)
+   printf("%s", on_level_call)
+   printf("%s", actor_on_update)
+   printf("%s", actor_on_first_update)
+   printf("%s", actor_on_weapon_fired)
+   printf("%s", on_before_mouse_move)
+   printf("%s", on_before_key_press)
+   printf("%s", on_before_key_release)
+   printf("%s", on_before_key_hold)
+   printf("%s", on_key_press)
 
    AddUniqueCall(do_on_level_call)
    RegisterScriptCallback("actor_on_update", do_actor_on_update)
    RegisterScriptCallback("actor_on_first_update", do_actor_on_first_update)
    RegisterScriptCallback("actor_on_weapon_fired", do_actor_on_weapon_fired)
-   RegisterScriptCallback("on_before_mouse_move", do_on_before_mouse_move)
+
    RegisterScriptCallback("on_key_press", do_on_key_press)
+
+   RegisterScriptCallback("on_before_key_press", do_on_before_key_press)
+   RegisterScriptCallback("on_before_key_release", do_on_before_key_release)
+   RegisterScriptCallback("on_before_key_hold", do_on_before_key_hold)
+   RegisterScriptCallback("on_before_mouse_move", do_on_before_mouse_move)
+
+   RegisterScriptCallback("GUI_on_show", do_gui_on_show)
+   RegisterScriptCallback("GUI_on_hide", do_gui_on_hide)
+
+   RegisterScriptCallback(
+      "ActorMenu_on_mode_changed",
+      do_actor_menu_on_mode_changed
+   )
 end

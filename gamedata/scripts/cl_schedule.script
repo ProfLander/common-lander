@@ -308,6 +308,8 @@ on_before_mouse_move = Schedule.new("on_before_mouse_move")
 on_before_key_press = Schedule.new("on_before_key_press")
 on_before_key_release = Schedule.new("on_before_key_release")
 on_before_key_hold = Schedule.new("on_before_key_hold")
+gui_on_show = Schedule.new("gui_on_show")
+gui_on_hide = Schedule.new("gui_on_hide")
 
 state = {}
 
@@ -412,10 +414,31 @@ end
 
 do_gui_on_show = function(name, id)
    printf("GUI_on_show: %s, %s", name, id)
+   state.gui = {
+      name = name,
+      id = id,
+   }
+   local res,out = pcall(gui_on_show, state)
+   if not res then
+      UnregisterScriptCallback(
+         "gui_on_show",
+         do_gui_on_show
+      )
+      handle_error(out, callstack(false, true))
+   end
 end
 
 do_gui_on_hide = function(name, id)
    printf("GUI_on_hide: %s, %s", name, id)
+   local res,out = pcall(gui_on_hide, state)
+   if not res then
+      UnregisterScriptCallback(
+         "gui_on_hide",
+         do_gui_on_hide
+      )
+      handle_error(out, callstack(false, true))
+   end
+   state.gui = nil
 end
 
 do_actor_menu_on_mode_changed = function(a, b)
